@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: saga-chat
+    runtime: python
+    pythonVersion: "3.12"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python manage.py migrate && python manage.py collectstatic --noinput && gunicorn irpf_chat.wsgi --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
+```
+
+E também atualiza o `runtime.txt` para:
+```
+python-3.12.10
