@@ -26,9 +26,7 @@ SYSTEM_PROMPT = """Você é um assistente especializado em IRPF (Imposto de Rend
 - Retificação: prazo, como proceder, impacto em restituição ou imposto a pagar
 - MEI e autônomos: DASN, DIRF, retenções na fonte
 
-Responda sempre em português brasileiro, de forma clara e profissional. Use exemplos com valores reais quando ajudar. Cite a legislação relevante (Lei 9.250/95, IN RFB, etc.) quando pertinente. Se o contexto incluir documentos do cliente, baseie sua análise neles. Nunca invente valores ou regras — se não tiver certeza, oriente a consultar o site da Receita Federal (receita.fazenda.gov.br).
-Se a pergunta não tiver relacionado com o IRPF, quero que você fale: Desculpe, ainda estou em desenvolvimento pelo Miguel e não possuo capacidade de responder nada além de DIRPF.
-"""
+Responda sempre em português brasileiro, de forma clara e profissional. Use exemplos com valores reais quando ajudar. Cite a legislação relevante (Lei 9.250/95, IN RFB, etc.) quando pertinente. Se o contexto incluir documentos do cliente, baseie sua análise neles. Nunca invente valores ou regras — se não tiver certeza, oriente a consultar o site da Receita Federal (receita.fazenda.gov.br)."""
 
 
 # ─── Auth ────────────────────────────────────────────────────────────────────
@@ -89,7 +87,7 @@ def delete_conversation(request, pk):
     return redirect('chat:index')
 
 
-# ─── Streaming chat ──────────────────────────────────────────────────────────
+# ─── Chat (sem streaming para compatibilidade com Render free) ───────────────
 
 @login_required
 @require_POST
@@ -112,10 +110,10 @@ def send_message(request, pk):
             'error': 'Você atingiu o limite de 100 mensagens por dia. Tente novamente amanhã.'
         }, status=429)
 
-    # Save user message
+    # Salva mensagem do usuário
     Message.objects.create(conversation=conversation, role='user', content=user_input)
 
-    # Build context from documents
+    # Contexto de documentos
     doc_context = ''
     for doc in conversation.documents.all():
         if doc.extracted_text:
@@ -123,7 +121,7 @@ def send_message(request, pk):
 
     system = SYSTEM_PROMPT + (f"\n\nDocumentos do cliente disponíveis:{doc_context}" if doc_context else '')
 
-    # Build message history (last 20 messages to stay within context)
+    # Histórico
     all_messages = list(conversation.messages.all().order_by('created_at'))
     history = [
         {'role': m.role, 'content': m.content}
@@ -135,17 +133,14 @@ def send_message(request, pk):
         client = Groq(api_key=settings.GROQ_API_KEY)
         full_response = ''
         try:
-            stream = client.chat.completions.create(
+            response = client.chat.completions.create(
                 model='llama-3.3-70b-versatile',
                 messages=[{'role': 'system', 'content': system}] + history,
-                stream=True,
+                stream=False,
                 max_tokens=1500,
             )
-            for chunk in stream:
-                text = chunk.choices[0].delta.content or ''
-                if text:
-                    full_response += text
-                    yield f"data: {json.dumps({'text': text})}\n\n"
+            full_response = response.choices[0].message.content or ''
+            yield f"data: {json.dumps({'text': full_response})}\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
             return
