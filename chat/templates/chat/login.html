@@ -1,0 +1,31 @@
+{% extends 'chat/base.html' %}
+{% block title %}Entrar — SAGA Chat{% endblock %}
+{% block body %}
+{% load static %}
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-logo">
+<img src="/static/img/logo.png" alt="SAGA Contabilidade" style="height:60px;width:auto;display:block;margin:0 auto 1rem;">      <h1>Saga IA</h1>
+      <p>Assistente Contábil</p>
+    </div>
+    {% if messages %}
+    <div class="alert alert-error">
+      {% for msg in messages %}{{ msg }}{% endfor %}
+    </div>
+    {% endif %}
+    <form method="post" class="login-form">
+      {% csrf_token %}
+      <div class="field">
+        <label for="username">Usuário</label>
+        <input type="text" id="username" name="username" autocomplete="username" autofocus required placeholder="seu.usuario">
+      </div>
+      <div class="field">
+        <label for="password">Senha</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required placeholder="••••••••">
+      </div>
+      <button type="submit" class="btn-primary btn-full">Entrar</button>
+    </form>
+    <p class="login-hint">Acesso restrito aos funcionários do escritório.<br>Solicite seu cadastro ao administrador.</p>
+  </div>
+</div>
+{% endblock %}

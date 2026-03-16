@@ -1,0 +1,129 @@
+{% extends 'chat/base.html' %}
+{% block title %}SAGA Chat{% endblock %}
+{% block body %}
+{% load static %}
+<div class="app-layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+        <img src="/static/img/logo.png" alt="SAGA" style="height:50px;width:auto;filter:brightness(0) invert(1)">
+      </div>
+      <form method="post" action="{% url 'chat:new_conversation' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn-new" title="Nova conversa">+</button>
+      </form>
+    </div>
+
+    <div class="sidebar-list">
+      {% if conversations %}
+      <p class="sidebar-section">Conversas</p>
+      {% endif %}
+      {% for conv in conversations %}
+      <div class="sidebar-item {% if active_conversation.pk == conv.pk %}active{% endif %}">
+        <a href="{% url 'chat:conversation' conv.pk %}" class="conv-link">
+          <span class="conv-title">{{ conv.title }}</span>
+          <span class="conv-date">{{ conv.updated_at|date:"d/m" }}</span>
+        </a>
+        <form method="post" action="{% url 'chat:delete_conversation' conv.pk %}" class="del-form">
+          {% csrf_token %}
+          <button type="submit" class="btn-del" title="Excluir" onclick="return confirm('Excluir conversa?')">×</button>
+        </form>
+      </div>
+      {% empty %}
+      <p class="empty-hint">Nenhuma conversa ainda.<br>Clique em + para começar.</p>
+      {% endfor %}
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-avatar">{{ request.user.username|first|upper }}</div>
+      <div class="user-info">
+        <span class="user-name">{{ request.user.get_full_name|default:request.user.username }}</span>
+      </div>
+      <a href="{% url 'chat:logout' %}" class="btn-logout">Sair</a>
+    </div>
+  </aside>
+
+  <main class="chat-main">
+    {% if active_conversation %}
+
+    <div class="chat-topbar">
+      <button class="btn-menu" onclick="toggleSidebar()">☰</button>
+      <h2 class="chat-title" id="chat-title">{{ active_conversation.title }}</h2>
+      <div class="topbar-right">
+        <label for="pdf-upload" class="btn-upload" title="Anexar PDF">
+          📎 Anexar PDF
+          <input type="file" id="pdf-upload" accept=".pdf" style="display:none" onchange="uploadPDF(this)">
+        </label>
+      </div>
+    </div>
+
+    {% if documents %}
+    <div class="doc-bar" id="doc-bar">
+      {% for doc in documents %}
+      <div class="doc-chip" id="doc-{{ doc.pk }}">
+        <span>📄 {{ doc.original_name }}</span>
+        <button onclick="deleteDoc({{ doc.pk }})" title="Remover">×</button>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="doc-bar" id="doc-bar" style="display:none"></div>
+    {% endif %}
+
+    <div class="messages" id="messages">
+      {% if not chat_messages %}
+      <div class="welcome">
+        <div class="welcome-icon">🧾</div>
+        <h3>Olá, {{ request.user.first_name|default:request.user.username }}!</h3>
+        <p>Tire suas dúvidas sobre o Imposto de Renda. Você também pode anexar PDFs com informes de rendimento ou documentos do cliente.</p>
+        <div class="suggestion-grid">
+          <button class="suggestion" onclick="fillInput(this.innerText)">Quais despesas médicas são dedutíveis?</button>
+          <button class="suggestion" onclick="fillInput(this.innerText)">Como declarar rendimentos de aluguel?</button>
+          <button class="suggestion" onclick="fillInput(this.innerText)">Qual o limite de dedução com educação?</button>
+          <button class="suggestion" onclick="fillInput(this.innerText)">Como calcular ganho de capital na venda de imóvel?</button>
+        </div>
+      </div>
+      {% endif %}
+
+      {% for msg in chat_messages %}
+      <div class="msg {{ msg.role }}">
+        <div class="msg-avatar">{% if msg.role == 'user' %}{{ request.user.username|first|upper }}{% else %}IR{% endif %}</div>
+        <div class="msg-bubble">{{ msg.content|linebreaksbr }}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="input-wrapper">
+      <div class="input-area">
+        <textarea id="user-input" placeholder="Mensagem para o assistente IRPF…" rows="1"
+          onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <button id="send-btn" onclick="sendMessage()" title="Enviar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <script>
+      const CONV_ID = {{ active_conversation.pk }};
+      const SEND_URL = "{% url 'chat:send_message' active_conversation.pk %}";
+      const UPLOAD_URL = "{% url 'chat:upload_document' active_conversation.pk %}";
+      const CSRF = "{{ csrf_token }}";
+    </script>
+
+    {% else %}
+    <div class="no-conv">
+      <!-- <div class="welcome-icon"></div> -->
+      <h2>Bem-vindo à SAGA IA</h2>
+      <p>Seu assistente contábil!.<br>Em testes, pergunte somente sobre DIRPF.</p>
+      <form method="post" action="{% url 'chat:new_conversation' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn-primary">Iniciar conversa</button>
+      </form>
+    </div>
+    {% endif %}
+  </main>
+</div>
+{% endblock %}
