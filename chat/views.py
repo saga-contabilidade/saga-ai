@@ -1,5 +1,6 @@
 import json
 import PyPDF2
+import traceback
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
@@ -87,7 +88,7 @@ def delete_conversation(request, pk):
     return redirect('chat:index')
 
 
-# ─── Chat (sem streaming para compatibilidade com Render free) ───────────────
+# ─── Chat ────────────────────────────────────────────────────────────────────
 
 @login_required
 @require_POST
@@ -142,6 +143,8 @@ def send_message(request, pk):
             full_response = response.choices[0].message.content or ''
             yield f"data: {json.dumps({'text': full_response})}\n\n"
         except Exception as e:
+            print(f"ERRO GROQ: {str(e)}")
+            print(traceback.format_exc())
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
             return
 
