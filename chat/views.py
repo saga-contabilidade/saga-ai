@@ -17,8 +17,17 @@ from .models import Conversation, Message, UploadedDocument
 from django.http import HttpResponse
 
 def diagnostico(request):
-    groq_key = settings.GROQ_API_KEY
-    return HttpResponse(f"GROQ_API_KEY configurada: {'SIM - ' + groq_key[:8] + '...' if groq_key else 'NÃO - VAZIA'}")
+    try:
+        client = Groq(api_key=settings.GROQ_API_KEY)
+        response = client.chat.completions.create(
+            model='llama-3.3-70b-versatile',
+            messages=[{'role': 'user', 'content': 'Responda apenas: ok'}],
+            stream=False,
+            max_tokens=10,
+        )
+        return HttpResponse(f"GROQ OK: {response.choices[0].message.content}")
+    except Exception as e:
+        return HttpResponse(f"ERRO: {str(e)}")
 
 SYSTEM_PROMPT = """Você é um assistente especializado em IRPF (Imposto de Renda de Pessoa Física) do Brasil, integrado ao sistema de um escritório de contabilidade. Seu papel é ajudar contadores e funcionários a esclarecer dúvidas técnicas sobre:
 
