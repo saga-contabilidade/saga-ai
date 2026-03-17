@@ -14,6 +14,12 @@ from groq import Groq
 
 from .models import Conversation, Message, UploadedDocument
 
+from django.http import HttpResponse
+
+def diagnostico(request):
+    groq_key = settings.GROQ_API_KEY
+    return HttpResponse(f"GROQ_API_KEY configurada: {'SIM - ' + groq_key[:8] + '...' if groq_key else 'NÃO - VAZIA'}")
+
 SYSTEM_PROMPT = """Você é um assistente especializado em IRPF (Imposto de Renda de Pessoa Física) do Brasil, integrado ao sistema de um escritório de contabilidade. Seu papel é ajudar contadores e funcionários a esclarecer dúvidas técnicas sobre:
 
 - Declaração do IRPF: modelo completo vs simplificado, prazo, multas por atraso

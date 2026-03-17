@@ -3,6 +3,9 @@ from . import views
 
 app_name = 'chat'
 
+path('diagnostico/', views.diagnostico, name='diagnostico'),
+
+
 urlpatterns = [
     path('', views.index, name='index'),
     path('login/', views.login_view, name='login'),
