@@ -1,3 +1,47 @@
+function confirmar(mensagem, callback) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position:fixed;inset:0;background:rgba(0,0,0,0.5);
+    display:flex;align-items:center;justify-content:center;z-index:9999;
+  `;
+
+  overlay.innerHTML = `
+    <div style="
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:14px;padding:28px 32px;max-width:360px;width:90%;
+      box-shadow:0 8px 32px rgba(0,0,0,0.4);
+    ">
+      <p style="color:var(--text);font-size:15px;margin-bottom:24px;line-height:1.5;">${mensagem}</p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button id="modal-cancelar" style="
+          padding:8px 18px;border-radius:8px;border:1px solid var(--border);
+          background:transparent;color:var(--text-muted);cursor:pointer;
+          font-size:14px;font-family:inherit;transition:background .15s;
+        ">Cancelar</button>
+        <button id="modal-confirmar" style="
+          padding:8px 18px;border-radius:8px;border:none;
+          background:#C0392B;color:#fff;cursor:pointer;
+          font-size:14px;font-weight:500;font-family:inherit;transition:background .15s;
+        ">Excluir</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  document.getElementById('modal-cancelar').onclick = () => {
+    document.body.removeChild(overlay);
+  };
+  document.getElementById('modal-confirmar').onclick = () => {
+    document.body.removeChild(overlay);
+    callback();
+  };
+
+  overlay.onclick = (e) => {
+    if (e.target === overlay) document.body.removeChild(overlay);
+  };
+}
+
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
 }

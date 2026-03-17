@@ -25,9 +25,10 @@
           <span class="conv-title">{{ conv.title }}</span>
           <span class="conv-date">{{ conv.updated_at|date:"d/m" }}</span>
         </a>
-        <form method="post" action="{% url 'chat:delete_conversation' conv.pk %}" class="del-form">
+        <form method="post" action="{% url 'chat:delete_conversation' conv.pk %}" class="del-form" id="del-form-{{ conv.pk }}">
           {% csrf_token %}
-          <button type="submit" class="btn-del" title="Excluir" onclick="return confirm('Excluir conversa?')">×</button>
+          <button type="button" class="btn-del" title="Excluir"
+            onclick="confirmar('Excluir a conversa &quot;{{ conv.title|truncatechars:40 }}&quot;?', () => document.getElementById('del-form-{{ conv.pk }}').submit())">×</button>
         </form>
       </div>
       {% empty %}
@@ -115,7 +116,6 @@
 
     {% else %}
     <div class="no-conv">
-      <!-- <div class="welcome-icon"></div> -->
       <h2>Bem-vindo à SAGA IA</h2>
       <p>Seu assistente contábil!.<br>Em testes, pergunte somente sobre DIRPF.</p>
       <form method="post" action="{% url 'chat:new_conversation' %}">
